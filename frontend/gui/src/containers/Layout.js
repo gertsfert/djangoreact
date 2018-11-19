@@ -3,6 +3,8 @@ import React from 'react';
 import { Layout, Menu, Breadcrumb } from 'antd';
 import { Link } from 'react-router-dom';
 
+import CollectionsPage from '../components/CreateArticle';
+
 const { Header, Content, Footer } = Layout;
 
 const CustomLayout = (props) => {
@@ -20,6 +22,7 @@ const CustomLayout = (props) => {
                     <Menu.Item key="2">nav 2</Menu.Item>
                     <Menu.Item key="3">nav 3</Menu.Item>
                 </Menu>
+                <CollectionsPage />
             </Header>
             <Content style={{ padding: '0 50px' }}>
                 <Breadcrumb style={{ margin: '16px 0' }}>

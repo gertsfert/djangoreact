@@ -1,8 +1,22 @@
 from django.urls import path
 
-from .views import ArticleListView, ArticleDetailView
+from .views import ArticleViewSet
 
 urlpatterns = [
-    path('', ArticleListView.as_view()),
-    path('<pk>', ArticleDetailView.as_view())
+    path(
+        '',
+        ArticleViewSet.as_view({
+            'get': 'list',
+            'post': 'create'}),
+        name='article-list'
+    ),
+    path(
+        '<pk>',
+        ArticleViewSet.as_view({
+            'get': 'retrieve',
+            'put': 'update',
+            'patch': 'partial_update',
+            'delete': 'destroy'}),
+        name='article_detail',
+    )
 ]

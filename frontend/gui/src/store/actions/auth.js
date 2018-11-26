@@ -37,6 +37,17 @@ export const checkAuthTimeout = expirationTime => {
   };
 };
 
+export const setExpirationDate = res => {
+  const token = res.data.key;
+  // expiration time is set per millisecond
+  // seems kinda strange that this will be stored on the client side?
+  const expirationDate = new Date(new Date().getTime() + 3600 * 1000);
+  localStorage.setItem("token", token);
+  localStorate.setItem("expirationDate", expirationDate);
+  dispatch(authSuccess(token));
+  dispatch(checkAuthTimeout(3600));
+};
+
 export const authLogin = (username, password) => {
   return dispatch => {
     dispatch(authStart());
@@ -45,16 +56,24 @@ export const authLogin = (username, password) => {
         username: username,
         password: password
       })
-      .then(res => {
-        const token = res.data.key;
-        // expiration time is set per millisecond
-        // seems kinda strange that this will be stored on the client side?
-        const expirationDate = new Date(new Date().getTime() + 3600 * 1000);
-        localStorage.setItem("token", token);
-        localStorate.setItem("expirationDate", expirationDate);
-        dispatch(authSuccess(token));
-        dispatch(checkAuthTimeout(3600));
+      .then(setExpirationDate(res))
+      .catch(error => {
+        dispatch(authFail(err));
+      });
+  };
+};
+
+export const authSignup = (username, email, password1, password2) => {
+  return dispatch => {
+    dispatch(authStart());
+    axios
+      .post("http://127.0.0.1:8000/rest-auth/registration/", {
+        username: username,
+        email: email,
+        password1: password1,
+        password2: password2
       })
+      .then(setExpirationDate(res))
       .catch(error => {
         dispatch(authFail(err));
       });

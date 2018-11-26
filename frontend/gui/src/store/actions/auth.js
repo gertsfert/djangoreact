@@ -54,6 +54,9 @@ export const authLogin = (username, password) => {
         localStorate.setItem("expirationDate", expirationDate);
         dispatch(authSuccess(token));
         dispatch(checkAuthTimeout(3600));
+      })
+      .catch(error => {
+        dispatch(authFail(err));
       });
   };
 };

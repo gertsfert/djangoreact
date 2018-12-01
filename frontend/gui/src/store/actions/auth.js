@@ -38,14 +38,16 @@ export const checkAuthTimeout = expirationTime => {
 };
 
 export const setExpirationDate = res => {
-  const token = res.data.key;
-  // expiration time is set per millisecond
-  // seems kinda strange that this will be stored on the client side?
-  const expirationDate = new Date(new Date().getTime() + 3600 * 1000);
-  localStorage.setItem("token", token);
-  localStorate.setItem("expirationDate", expirationDate);
-  dispatch(authSuccess(token));
-  dispatch(checkAuthTimeout(3600));
+  return dispatch => {
+    const token = res.data.key;
+    // expiration time is set per millisecond
+    // seems kinda strange that this will be stored on the client side?
+    const expirationDate = new Date(new Date().getTime() + 3600 * 1000);
+    localStorage.setItem("token", token);
+    localStorage.setItem("expirationDate", expirationDate);
+    dispatch(authSuccess(token));
+    dispatch(checkAuthTimeout(3600));
+  };
 };
 
 export const authLogin = (username, password) => {
@@ -56,8 +58,8 @@ export const authLogin = (username, password) => {
         username: username,
         password: password
       })
-      .then(setExpirationDate(res))
-      .catch(error => {
+      .then(res => setExpirationDate(res))
+      .catch(err => {
         dispatch(authFail(err));
       });
   };
@@ -73,9 +75,30 @@ export const authSignup = (username, email, password1, password2) => {
         password1: password1,
         password2: password2
       })
-      .then(setExpirationDate(res))
-      .catch(error => {
+      .then(res => setExpirationDate(res))
+      .catch(err => {
         dispatch(authFail(err));
       });
+  };
+};
+
+export const authCheckState = () => {
+  return dispatch => {
+    const token = localStorage.getItem("token");
+    if (token === undefined) {
+      dispatch(logout());
+    } else {
+      const expirationDate = new Date(localStorage.getItem("expirationDate"));
+      if (expirationDate <= new Date()) {
+        dispatch(logout());
+      } else {
+        dispatch(authSuccess(token));
+        dispatch(
+          checkAuthTimeout(
+            (expirationDate.getTime() - new Date().getTime()) / 1000
+          )
+        );
+      }
+    }
   };
 };

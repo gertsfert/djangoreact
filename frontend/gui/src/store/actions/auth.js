@@ -2,103 +2,111 @@ import * as actionTypes from "./actionTypes";
 import axios from "axios";
 
 export const authStart = () => {
-  return {
-    type: actionTypes.AUTH_START
-  };
+    return {
+        type: actionTypes.AUTH_START
+    };
 };
 
 export const authSuccess = token => {
-  return {
-    type: actionTypes.AUTH_SUCCESS,
-    token: token
-  };
+    return {
+        type: actionTypes.AUTH_SUCCESS,
+        token: token
+    };
 };
 
 export const authFail = error => {
-  return {
-    type: actionTypes.AUTH_FAIL,
-    error: error
-  };
+    return {
+        type: actionTypes.AUTH_FAIL,
+        error: error
+    };
 };
 
 export const logout = () => {
-  localStorage.removeItem("user");
-  localStorage.removeItem("expirationDate");
-  return {
-    type: actionTypes.AUTH_LOGOUT
-  };
+    localStorage.removeItem("user");
+    localStorage.removeItem("expirationDate");
+    return {
+        type: actionTypes.AUTH_LOGOUT
+    };
 };
 
 export const checkAuthTimeout = expirationTime => {
-  return dispatch => {
-    setTimeout(() => {
-      dispatch(logout());
-    }, expirationTime * 1000);
-  };
+    return dispatch => {
+        setTimeout(() => {
+            dispatch(logout());
+        }, expirationTime * 1000);
+    };
 };
 
-export const setExpirationDate = res => {
-  return dispatch => {
-    const token = res.data.key;
+export const setExpirationDate = () => {
     // expiration time is set per millisecond
     // seems kinda strange that this will be stored on the client side?
     const expirationDate = new Date(new Date().getTime() + 3600 * 1000);
-    localStorage.setItem("token", token);
     localStorage.setItem("expirationDate", expirationDate);
-    dispatch(authSuccess(token));
-    dispatch(checkAuthTimeout(3600));
-  };
+    return checkAuthTimeout(3600);
+};
+
+export const setToken = token => {
+    localStorage.setItem("token", token);
+    return authSuccess(token);
 };
 
 export const authLogin = (username, password) => {
-  return dispatch => {
-    dispatch(authStart());
-    axios
-      .post("http://127.0.0.1:8000/rest-auth/login/", {
-        username: username,
-        password: password
-      })
-      .then(res => setExpirationDate(res))
-      .catch(err => {
-        dispatch(authFail(err));
-      });
-  };
+    return dispatch => {
+        dispatch(authStart());
+        axios
+            .post("http://127.0.0.1:8000/rest-auth/login/", {
+                username: username,
+                password: password
+            })
+            .then(res => {
+                dispatch(setToken(res.data.token));
+                dispatch(setExpirationDate());
+            })
+            .catch(err => {
+                dispatch(authFail(err));
+            });
+    };
 };
 
 export const authSignup = (username, email, password1, password2) => {
-  return dispatch => {
-    dispatch(authStart());
-    axios
-      .post("http://127.0.0.1:8000/rest-auth/registration/", {
-        username: username,
-        email: email,
-        password1: password1,
-        password2: password2
-      })
-      .then(res => setExpirationDate(res))
-      .catch(err => {
-        dispatch(authFail(err));
-      });
-  };
+    return dispatch => {
+        dispatch(authStart());
+        axios
+            .post("http://127.0.0.1:8000/rest-auth/registration/", {
+                username: username,
+                email: email,
+                password1: password1,
+                password2: password2
+            })
+            .then(res => {
+                dispatch(setToken(res.data.token));
+                dispatch(setExpirationDate());
+            })
+            .catch(err => {
+                dispatch(authFail(err));
+            });
+    };
 };
 
 export const authCheckState = () => {
-  return dispatch => {
-    const token = localStorage.getItem("token");
-    if (token === undefined) {
-      dispatch(logout());
-    } else {
-      const expirationDate = new Date(localStorage.getItem("expirationDate"));
-      if (expirationDate <= new Date()) {
-        dispatch(logout());
-      } else {
-        dispatch(authSuccess(token));
-        dispatch(
-          checkAuthTimeout(
-            (expirationDate.getTime() - new Date().getTime()) / 1000
-          )
-        );
-      }
-    }
-  };
+    return dispatch => {
+        const token = localStorage.getItem("token");
+        if (token === undefined) {
+            dispatch(logout());
+        } else {
+            const expirationDate = new Date(
+                localStorage.getItem("expirationDate")
+            );
+            if (expirationDate <= new Date()) {
+                dispatch(logout());
+            } else {
+                dispatch(authSuccess(token));
+                dispatch(
+                    checkAuthTimeout(
+                        (expirationDate.getTime() - new Date().getTime()) / 1000
+                    )
+                );
+            }
+        }
+    };
 };
